@@ -24,6 +24,6 @@ class TextFeatures:
       num_repeated_dot,
       num_exclamation,
       num_http,
-      ratio_capitalize
+      ratio_capitalized
     )).T
     return features
