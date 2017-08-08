@@ -12,6 +12,7 @@ class TextFeatures:
     num_repeated_dot = df['comment'].apply(lambda x: x.count('..'))
     num_exclamation = df['comment'].apply(lambda x: x.count('!'))
     num_http = df['comment'].apply(lambda x: x.count('http'))
+    num_negations = df['comment'].apply(lambda x: x.count('nicht') + x.count('nie') + x.count('weder') + x.count('nichts'))
     ratio_capitalized = df['comment'].apply(lambda x: sum(1 for c in x if c.isupper()) / len(x))
 
     features = np.vstack((
@@ -24,8 +25,8 @@ class TextFeatures:
       num_repeated_dot,
       num_exclamation,
       num_http,
+      num_negations,
       ratio_capitalized
     )).T
-    
-    print(features.shape)
+
     return features
