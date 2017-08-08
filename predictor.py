@@ -1,4 +1,5 @@
 from feature.text_features import TextFeatures
+from feature.word2vec import Word2Vec
 from classifier.svr import SVR
 import numpy as np
 import pandas as pd
@@ -21,7 +22,8 @@ class Predictor:
 
     def __init__(self):
         self.features = [
-            ('text_features', TextFeatures())
+            ('text_features', TextFeatures()),
+            ('word2vec', Word2Vec())
         ]
 
         self.classifier = [
@@ -32,5 +34,6 @@ class Predictor:
         return df['hate']
 
     def calculate_feature_matrix(self, df):
-        return np.concatenate([feature[1].extractFeatures(df) for feature in self.features])
+        feature_matrix = np.hstack((feature[1].extractFeatures(df) for feature in self.features))
+        return feature_matrix
 
