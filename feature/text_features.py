@@ -26,4 +26,6 @@ class TextFeatures:
       num_http,
       ratio_capitalized
     )).T
+    
+    print(features.shape)
     return features
