@@ -35,5 +35,6 @@ class Predictor:
 
     def calculate_feature_matrix(self, df):
         feature_matrix = np.hstack((feature[1].extractFeatures(df) for feature in self.features))
+        print("...using", feature_matrix.shape[1], "features from", ", ".join([feature[0] for feature in self.features]))
         return feature_matrix
 
