@@ -19,4 +19,4 @@ class NGramFeatures:
       counts = self.count_vectorizer.transform(df["comment"])
       features = self.tfidf_transformer.transform(counts)
 
-    return features.tocsr().toarray()
+    return features
