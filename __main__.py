@@ -35,8 +35,9 @@ def execute(dataset='tiny'):
     print(predictor.metrics())
 
     roc = ROC()
-    roc.calculate(result['svr'], test_df['hate'])
-    roc.print(dataset)
+    for classifier in result.columns.values:
+        roc.calculate(result[classifier], test_df['hate'])
+        roc.print(dataset + ' using ' + classifier)
 
 def main():
     init_nltk()

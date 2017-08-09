@@ -1,11 +1,15 @@
 from sklearn.metrics import precision_recall_fscore_support
 from scipy.sparse import hstack
+# from numpy import hstack
 from feature.text_features import TextFeatures
 from feature.ngram_features import NGramFeatures
+from scipy.sparse import csr_matrix
 from feature.word2vec import Word2Vec
 from classifier.svr import SVR
+from classifier.naive_bayes import NaiveBayes
 import numpy as np
 import pandas as pd
+from sklearn.preprocessing import normalize, MaxAbsScaler
 
 class Predictor:
     def fit(self, df):
@@ -51,6 +55,9 @@ class Predictor:
 
     def calculate_feature_matrix(self, df):
         feature_matrix = hstack([feature[1].extractFeatures(df) for feature in self.features])
+        scaler = MaxAbsScaler()
+        scaled_feature_matrix = scaler.fit_transform(feature_matrix)
+        normalize(scaled_feature_matrix, norm='l2', axis=0, copy=False)
         return feature_matrix
 
     def __init__(self):
@@ -61,5 +68,6 @@ class Predictor:
         ]
 
         self.classifier = [
-            ('svr', SVR())
+            ('svr', SVR()),
+            # ('naive_bayes', NaiveBayes())
         ]
