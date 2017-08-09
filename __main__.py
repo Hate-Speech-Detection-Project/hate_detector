@@ -29,8 +29,10 @@ def execute(dataset='tiny'):
     predictor.fit(train_df)
     print("Predict...")
     result = predictor.predict(test_df)
-    print("Result:")
-    print(result)
+    # print("Result:")
+    # print(result)
+    print("Metrics:")
+    print(predictor.metrics())
 
     roc = ROC()
     roc.calculate(result['svr'], test_df['hate'])
@@ -41,7 +43,6 @@ def main():
     datasets = [
         'tiny',
         '1000',
-        '10000',
         '10000',
         'stratified',
         'stratified_1000',

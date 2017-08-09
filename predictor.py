@@ -28,7 +28,7 @@ class Predictor:
         predictions = pd.DataFrame()
         for classifier in self.classifier:
             predictions[classifier[0]] = classifier[1].predict(feature_matrix)
-        
+
         # For each classifier, generate some metrics like recall.
         metrics = {}
         for classifier in self.classifier:
@@ -38,8 +38,13 @@ class Predictor:
                 average='binary'
             )
             metrics[classifier[0]] = dict(zip(['precision', 'recall', 'f-score', 'support'], scores))
-        
-        return metrics
+
+        self._metrics = metrics
+
+        return predictions
+
+    def metrics(self):
+        return self._metrics
 
     def ground_truth(self, df):
         return df['hate']
