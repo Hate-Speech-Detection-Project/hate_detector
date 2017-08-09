@@ -2,6 +2,7 @@ import pandas as pd
 from predictor import Predictor
 import nltk
 import os
+from analysis.roc import ROC
 
 def init_nltk():
     if not os.path.exists('nltk'):
@@ -19,10 +20,10 @@ def load_data(dataset='tiny'):
     test_df = pd.read_csv('data/' + dataset + '/test.csv', sep=',')
     return (train_df, test_df)
 
-def main():
-    init_nltk()
+def execute(dataset='tiny'):
+    print("Using dataset", dataset)
     print("Load Data...")
-    train_df, test_df = load_data()
+    train_df, test_df = load_data(dataset)
     predictor = Predictor()
     print("Fit...")
     predictor.fit(train_df)
@@ -30,6 +31,27 @@ def main():
     result = predictor.predict(test_df)
     print("Result:")
     print(result)
+
+    roc = ROC()
+    roc.calculate(result['svr'], test_df['hate'])
+    roc.print(dataset)
+
+def main():
+    init_nltk()
+    datasets = [
+        'tiny',
+        '1000',
+        '10000',
+        '10000',
+        'stratified',
+        'stratified_1000',
+        'stratified_10000',
+        'stratified_30000',
+        'all'
+    ]
+    for dataset in datasets:
+        execute(dataset)
+
 
 if __name__ == '__main__':
     # execute only if run as the entry point into the program
