@@ -6,6 +6,7 @@ from feature.ngram_features import NGramFeatures
 from scipy.sparse import csr_matrix
 from feature.word2vec import Word2Vec
 from classifier.svr import SVR
+from classifier.svc import SVC
 from classifier.naive_bayes import NaiveBayes
 import numpy as np
 import pandas as pd
@@ -69,5 +70,6 @@ class Predictor:
 
         self.classifier = [
             ('svr', SVR()),
+            ('svc', SVC()),
             # ('naive_bayes', NaiveBayes())
         ]
