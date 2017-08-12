@@ -11,7 +11,7 @@ class HybridEnsemble(Classifier):
           classifiers[key] = tuple[1]
 
         hybridEnsemble = Ensemble(classifiers = classifiers)
-        hybridEnsembleClassifier = EnsembleClassifier(ensemble=hybridEnsemble, combiner=Combiner('mean'))
+        hybridEnsembleClassifier = EnsembleClassifier(ensemble=hybridEnsemble, combiner=Combiner('max'))
 
         super().__init__(hybridEnsembleClassifier)
         self.name = "ensemble"
