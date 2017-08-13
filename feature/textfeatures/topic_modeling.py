@@ -59,7 +59,7 @@ class TopicModeling:
         print('starting training')
         self.lda = models.ldamodel.LdaModel(corpus, num_topics=200, alpha='auto')
         # save the trained model
-        self.lda.save('../data/model/lda.model')
+        self.lda.save('../../model/ldamodel/lda.model')
         print('training finished')
 
     def get_diff_for_topics(self, document_topics, comment_topics):
