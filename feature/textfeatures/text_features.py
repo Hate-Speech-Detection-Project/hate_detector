@@ -10,10 +10,10 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 import sys
+from feature.textfeatures.topic_modeling import TopicModeling
 
-# CORE_THREADS_NUM = cpu_count()
-CORE_THREADS_NUM = 1
-RESULT_COUNT = 16
+CORE_THREADS_NUM = cpu_count()
+RESULT_COUNT = 17
 
 
 class Resultindices(Enum):
@@ -21,7 +21,7 @@ class Resultindices(Enum):
     NUM_OF_QUESTIONMARKS, NUM_OF_EXCLAMATIONMARKS, NUM_OF_DOTS, NUM_OF_QUOTES, \
     NUM_OF_REPEATED_DOT, RATIO_CAPITALIZED, NUM_OF_HTTP, \
     NUM_OF_ADJECTIVES, NUM_OF_DETERMINER, NUM_OF_PERSONAL_PRONOUNS, NUM_OF_ADVERBS, \
-    COS_SIMILARITY_ARTICLE, COS_SIMILARITY_HATE_COMMENTS = range(
+    COS_SIMILARITY_ARTICLE, COS_SIMILARITY_HATE_COMMENTS, KULLBACK_LEIBLER_DIVERGENCE_TO_ARTICLE = range(
         RESULT_COUNT)
 
 
@@ -29,34 +29,31 @@ class TextFeatures:
     def __init__(self):
         self.topic_features = TopicFeatures()
         self.results = []
-        # self.results = [0] * RESULT_COUNT
 
     def extractFeatures(self, old_df):
+        print('Start exctraction of text-features')
+        start_time = time.time()
 
         df = old_df[['comment', 'url']]
         self.df_parts = np.array_split(df, CORE_THREADS_NUM)
 
-        start_time = time.time()
-        print('Start semantic analysis')
-        tagged_comments = self._tagComments(df)
-        self._calculateSemanticFeatures(tagged_comments)
-        print('Finished semantic analysis')
 
-        print('Start calculation of cosinent-similarity for semantic analysis')
+        tagged_comments = self._tagComments()
+        self._calculateSemanticFeatures(tagged_comments)
 
         self._calculateCosSimilarity()
 
-        print('Finished calculation of cosinent-similarity for semantic analysis')
-
         self._calculateSyntaxFeatures(df)
 
-        print("--- %s seconds ---" % (time.time() - start_time))
+        self._calculateFeatureFromTopicModel(old_df)
 
+
+        print("--- Took %s seconds ---" % (time.time() - start_time))
         features = np.vstack(self.results).T
-
         self.show_correlation_heat_map(features, old_df)
 
         return features
+
 
     def _calculateSemanticFeatures(self, tagged_comments):
         threads = []
@@ -206,7 +203,7 @@ class TextFeatures:
         for p in processes:
             p.join()
 
-    def _tagComments(self, df):
+    def _tagComments(self):
         manager = Manager()
         return_dict = manager.dict()
         processes = []
@@ -236,6 +233,27 @@ class TextFeatures:
             list.append(int(topic_features.get_cos_similarity_for_hate_comments_of_article(row['comment'], row['url'])))
         cos_list[result_index] = list
 
+    def _calculateFeatureFromTopicModel(self, df):
+
+        topic_model = TopicModeling()
+        successfully_instantiated_model = topic_model.initialiseModel()
+
+        if not successfully_instantiated_model:
+            return
+
+        list = []
+        for index, row in df.iterrows():
+            list.append(topic_model.calculateKullbackLeibnerDivergence(row['comment'], row['url']))
+
+        self.results.insert(Resultindices.KULLBACK_LEIBLER_DIVERGENCE_TO_ARTICLE.value, list)
+
+    def _applyTopicModel(self,df,result_list, index, topic_model):
+        list = []
+        for index, row in df.iterrows():
+            list.append(topic_model.calculateKullbackLeibnerDivergence(row['comment'], row['url']))
+        result_list[index] = list
+
+
     def show_correlation_heat_map(self, feature_matrix, df):
         # #EM = #ExclamationMarks
         # #QM = #QuestionMarks
@@ -257,18 +275,23 @@ class TextFeatures:
 
         # CoSS A = cos similarity with article
         # CoSS NAC = cos similarity with non-appropriate comments for the article
+        # KLDA = KullbackLeiblerDivergenceToArticle
+
+        # TV = TargetVariable
 
         target_variable = df['hate'].apply(lambda x: int(x))
         feature_matrix = np.hstack((feature_matrix, np.reshape(target_variable, (len(df), 1))))
-        # print(feature_matrix)
+
         frame = pd.DataFrame(data=feature_matrix, index=range(len(feature_matrix)))
         frame.columns = ['LC', 'NM', '# DW', '# QM', '# EM', '# D', '# Q', '# RD', 'RC', '# HTTP',
                          '# AJ', '# DM', '# PP', '# AV',
-                         'CoSS A', 'CoSS NAC', 'target_variable']
+                         'COS_A', 'COS_NAC', 'KLDA', 'TV']
         correlation_matrix = frame.corr()
+        np.savetxt("./textfeaturematrix.csv",correlation_matrix, delimiter=";")
 
         ax = plt.axes()
         sns.heatmap(correlation_matrix, ax=ax)
+
 
         ax.set_title('Text-Feature Correlations')
         plt.show()

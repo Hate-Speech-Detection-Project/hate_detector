@@ -3,8 +3,6 @@ import math
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
-from threading import Thread
-
 SIMILAR = 0
 DIFFERENT = 90
 
