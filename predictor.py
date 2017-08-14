@@ -28,11 +28,11 @@ class Predictor:
         feature_matrix = self.calculate_feature_matrix(df)
         print("...using", feature_matrix.shape[1], "features from", ", ".join([feature[0] for feature in self.features]))
 
-        trainedClassifiers = [None] * len(self.classifier)
+        processes = [None] * len(self.classifier)
         for index, classifier in enumerate(self.classifier):
-            trainedClassifiers[index] = pool.apply_async(classifier[1].fit, (feature_matrix, self.ground_truth(df))) 
+            processes[index] = pool.apply_async(classifier[1].fit, (feature_matrix, self.ground_truth(df))) 
 
-        for index, trainedClassifier in enumerate(trainedClassifiers):
+        for index, trainedClassifier in enumerate(processes):
             classifier = trainedClassifier.get()
             self.classifier[index] = (classifier.name, classifier,)
 
