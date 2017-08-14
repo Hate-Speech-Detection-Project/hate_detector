@@ -15,9 +15,10 @@ class Classifier:
 
         if self.useCalibration == True:
             self.model = CalibratedClassifierCV(self.algorithm)
-            self.model.fit(features, ground_truth)
         else:
-            self.model = self.algorithm.fit(features, ground_truth)
+            self.model = self.algorithm
+
+        self.model.fit(features, ground_truth, sample_weight=self.getWeights(ground_truth))
 
     def predict(self, features):
         assert self.model is not None, 'Executed predict() without calling fit()'
@@ -26,3 +27,13 @@ class Classifier:
     def prediction_to_binary(self, prediction):
         result = prediction > 0.1
         return result
+
+    def getWeights(self, labelArray):
+        unique, counts = np.unique(labelArray, return_counts=True)
+        classCounts = dict(zip(unique, counts))
+        weights = [None] * len(labelArray)
+
+        for key, label in enumerate(labelArray):
+            weights[key] = len(labelArray)/classCounts[label]
+
+        return np.array(weights)
