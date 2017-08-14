@@ -13,6 +13,7 @@ class Classifier:
         self.classes_ = [0, 1]
 
     def fit(self, features, ground_truth):
+        print("begin fitting " + self.name)
         self.model = self.algorithm
         if self.useCalibration:
             self.model = CalibratedClassifierCV(self.algorithm)
@@ -21,10 +22,15 @@ class Classifier:
             self.model.fit(features, ground_truth, sample_weight=self.getWeights(ground_truth))
         else:
             self.model.fit(features, ground_truth)
+        
+        print("finnished fitting " + self.name)
+        return self
 
     def predict(self, features):
+        print("begin predictinng " + self.name)
         assert self.model is not None, 'Executed predict() without calling fit()'
         return self.model.predict(features)
+        print("finnished predicting " + self.name)
 
     def prediction_to_binary(self, prediction):
         result = prediction > 0.1
