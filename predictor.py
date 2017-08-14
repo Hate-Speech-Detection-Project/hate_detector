@@ -78,4 +78,4 @@ class Predictor:
             ('logistic regression', LogisticRegression()),
             # ('naive_bayes', NaiveBayes())
         ]
-        self.classifier += [("ensemble", HybridEnsemble(self.classifier))]
+        self.classifier += [("ensemble_median", HybridEnsemble(self.classifier, 'median'))]
