@@ -24,7 +24,6 @@ class Predictor:
         feature_matrix = self.calculate_feature_matrix(df)
         print("...using", feature_matrix.shape[1], "features from", ", ".join([feature[0] for feature in self.features]))
         for classifier in self.classifier:
-            classifier[1].fit(feature_matrix, self.ground_truth(df))
             self.scheduler.schedule(classifier[1].fit, (feature_matrix, self.ground_truth(df),))
         self.scheduler.joinAll()
 
