@@ -15,17 +15,26 @@ from classifier.ensemble import HybridEnsemble
 from classifier.random_forest import RandomForest
 from classifier.logistic_regression import LogisticRegression
 from scheduler import Scheduler
+from multiprocessing import Pool
+
 
 class Predictor:
     def fit(self, df):
         '''
         Generate the features from the dataframe and fit the classifiers.
         '''
+
+        pool = Pool(processes=4)
         feature_matrix = self.calculate_feature_matrix(df)
         print("...using", feature_matrix.shape[1], "features from", ", ".join([feature[0] for feature in self.features]))
-        for classifier in self.classifier:
-            self.scheduler.schedule(classifier[1].fit, (feature_matrix, self.ground_truth(df),))
-        self.scheduler.joinAll()
+
+        processes = [None] * len(self.classifier)
+        for index, classifier in enumerate(self.classifier):
+            processes[index] = pool.apply_async(classifier[1].fit, (feature_matrix, self.ground_truth(df))) 
+
+        for index, trainedClassifier in enumerate(processes):
+            classifier = trainedClassifier.get()
+            self.classifier[index] = (classifier.name, classifier,)
 
     def predict(self, df):
         '''
