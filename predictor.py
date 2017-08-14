@@ -33,7 +33,7 @@ class Predictor:
             trainedClassifiers[index] = pool.apply_async(classifier[1].fit, (feature_matrix, self.ground_truth(df))) 
 
         for index, trainedClassifier in enumerate(trainedClassifiers):
-            classifier = trainedClassifier.get(timeout=1)
+            classifier = trainedClassifier.get()
             self.classifier[index] = (classifier.name, classifier,)
 
     def predict(self, df):
