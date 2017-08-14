@@ -1,3 +1,4 @@
+git+https://github.com/viisar/brew.git
 boto==2.48.0
 bz2file==0.98
 certifi==2017.7.27.1
