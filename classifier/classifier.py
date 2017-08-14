@@ -7,17 +7,16 @@ class Classifier:
     def __init__(self, algorithm, useCalibration = False):
         self.algorithm = algorithm
         self.model = None
+        self.name = "unnamed"
         self.useCalibration = useCalibration
+        self.classes_ = [0, 1]
 
     def fit(self, features, ground_truth):
-        print("Features")
-        print(np.min(features))
-
+        self.model = self.algorithm
         if self.useCalibration == True:
             self.model = CalibratedClassifierCV(self.algorithm)
-            self.model.fit(features, ground_truth)
-        else:
-            self.model = self.algorithm.fit(features, ground_truth)
+
+        self.model.fit(features, ground_truth)
 
     def predict(self, features):
         assert self.model is not None, 'Executed predict() without calling fit()'

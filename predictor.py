@@ -1,7 +1,7 @@
 from sklearn.metrics import precision_recall_fscore_support
 from scipy.sparse import hstack
 # from numpy import hstack
-from feature.text_features import TextFeatures
+from feature.textfeatures.text_features import TextFeatures
 from feature.ngram_features import NGramFeatures
 from scipy.sparse import csr_matrix
 from feature.word2vec import Word2Vec
@@ -11,6 +11,9 @@ from classifier.naive_bayes import NaiveBayes
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import normalize, MaxAbsScaler
+from classifier.ensemble import HybridEnsemble
+from classifier.random_forest import RandomForest
+from classifier.logistic_regression import LogisticRegression
 
 class Predictor:
     def fit(self, df):
@@ -69,7 +72,10 @@ class Predictor:
         ]
 
         self.classifier = [
-            ('svr', SVR()),
+            #('svr', SVR()),
             ('svc', SVC()),
+            ('random forest', RandomForest()),
+            ('logistic regression', LogisticRegression()),
             # ('naive_bayes', NaiveBayes())
         ]
+        self.classifier += [("ensemble_median", HybridEnsemble(self.classifier, 'median'))]
