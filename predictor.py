@@ -1,3 +1,5 @@
+import numpy as np
+import pandas as pd
 from sklearn.metrics import precision_recall_fscore_support
 from scipy.sparse import hstack
 # from numpy import hstack
@@ -8,12 +10,11 @@ from feature.word2vec import Word2Vec
 from classifier.svr import SVR
 from classifier.svc import SVC
 from classifier.naive_bayes import NaiveBayes
-import numpy as np
-import pandas as pd
 from sklearn.preprocessing import normalize, MaxAbsScaler
 from classifier.ensemble import HybridEnsemble
 from classifier.random_forest import RandomForest
 from classifier.logistic_regression import LogisticRegression
+from scheduler import Scheduler
 
 class Predictor:
     def fit(self, df):
@@ -23,7 +24,8 @@ class Predictor:
         feature_matrix = self.calculate_feature_matrix(df)
         print("...using", feature_matrix.shape[1], "features from", ", ".join([feature[0] for feature in self.features]))
         for classifier in self.classifier:
-            classifier[1].fit(feature_matrix, self.ground_truth(df))
+            self.scheduler.schedule(classifier[1].fit, (feature_matrix, self.ground_truth(df),))
+        self.scheduler.joinAll()
 
     def predict(self, df):
         '''
@@ -65,6 +67,8 @@ class Predictor:
         return feature_matrix
 
     def __init__(self):
+        self.scheduler = Scheduler()
+
         self.features = [
             #('text_features', TextFeatures()),
             ('word2vec', Word2Vec()),
