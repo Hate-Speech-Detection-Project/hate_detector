@@ -19,7 +19,7 @@ class Classifier:
         self.model.fit(features, ground_truth)
 
     def predict(self, features):
-        #assert self.model is not None, 'Executed predict() without calling fit()'
+        assert self.model is not None, 'Executed predict() without calling fit()'
         return self.model.predict(features)
 
     def prediction_to_binary(self, prediction):

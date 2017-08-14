@@ -1,7 +1,7 @@
 from sklearn.metrics import precision_recall_fscore_support
 from scipy.sparse import hstack
 # from numpy import hstack
-from feature.text_features import TextFeatures
+from feature.textfeatures.text_features import TextFeatures
 from feature.ngram_features import NGramFeatures
 from scipy.sparse import csr_matrix
 from feature.word2vec import Word2Vec
