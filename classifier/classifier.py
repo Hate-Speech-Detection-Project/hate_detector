@@ -4,21 +4,23 @@ import pandas as pd
 from sklearn.calibration import CalibratedClassifierCV
 
 class Classifier:
-    def __init__(self, algorithm, useCalibration = False):
+    def __init__(self, algorithm, useCalibration = False, useWeights = False):
         self.algorithm = algorithm
         self.model = None
+        self.name = "unnamed"
         self.useCalibration = useCalibration
+        self.useWeights = useWeights
+        self.classes_ = [0, 1]
 
     def fit(self, features, ground_truth):
-        print("Features")
-        print(np.min(features))
-
-        if self.useCalibration == True:
+        self.model = self.algorithm
+        if self.useCalibration:
             self.model = CalibratedClassifierCV(self.algorithm)
-        else:
-            self.model = self.algorithm
 
-        self.model.fit(features, ground_truth, sample_weight=self.getWeights(ground_truth))
+        if self.useWeights:
+            self.model.fit(features, ground_truth, sample_weight=self.getWeights(ground_truth))
+        else:
+            self.model.fit(features, ground_truth)
 
     def predict(self, features):
         assert self.model is not None, 'Executed predict() without calling fit()'
