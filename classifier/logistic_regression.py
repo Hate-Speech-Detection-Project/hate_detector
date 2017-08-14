@@ -4,5 +4,5 @@ from classifier.classifier import Classifier
 
 class LogisticRegression(Classifier):
     def __init__(self):
-        super().__init__(RegressionClassifier(random_state=0), False)
+        super().__init__(RegressionClassifier(random_state=0), useWeights = True)
         self.name = "logistic regression"
