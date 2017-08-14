@@ -66,13 +66,13 @@ class Predictor:
 
     def __init__(self):
         self.features = [
-            ('text_features', TextFeatures()),
+            #('text_features', TextFeatures()),
             ('word2vec', Word2Vec()),
             ('ngram_features', NGramFeatures())
         ]
 
         self.classifier = [
-            #('svr', SVR()),
+            ('svr', SVR()),
             ('svc', SVC()),
             ('random forest', RandomForest()),
             ('logistic regression', LogisticRegression()),
