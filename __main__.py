@@ -45,6 +45,7 @@ def main():
         'tiny',
         '1000',
         '10000',
+        '100000',
         'stratified',
         'stratified_1000',
         'stratified_10000',
