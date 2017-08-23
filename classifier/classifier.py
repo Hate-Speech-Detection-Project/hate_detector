@@ -27,7 +27,10 @@ class Classifier:
 
     def predict(self, features):
         assert self.model is not None, 'Executed predict() without calling fit()'
-        return self.model.predict(features)
+        if self.useCalibration:
+            return self.model.predict_proba(features)[:, 1]
+        else:
+            return self.model.predict(features)
 
     def prediction_to_binary(self, prediction):
         result = prediction > 0.1

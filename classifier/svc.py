@@ -4,5 +4,5 @@ from classifier.classifier import Classifier
 
 class SVC(Classifier):
     def __init__(self):
-        super().__init__(NuSVC(), useWeights = True)
+        super().__init__(NuSVC(), useWeights = True, useCalibration=True)
         self.name = "svc"
