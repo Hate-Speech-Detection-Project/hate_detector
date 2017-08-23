@@ -86,7 +86,7 @@ class Predictor:
 
         self.classifier = [
             ('svr', SVR()),
-            ('svc', SVC()),
+            #('svc', SVC()),
             ('random forest', RandomForest()),
             ('logistic regression', LogisticRegression()),
             # ('naive_bayes', NaiveBayes())
