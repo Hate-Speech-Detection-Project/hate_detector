@@ -7,7 +7,7 @@ import warnings
 class TopicModeling:
     def initialiseModel(self):
         self.stopwords = []
-        for row in open("../../data/stopwords_de.txt"):
+        for row in open("data/stopwords_de.txt"):
             self.stopwords.append(row.replace('\n', '').replace('\r', ''))
 
         try:
@@ -26,7 +26,7 @@ class TopicModeling:
             articles.append(tuple[0])
         articles = self.remove_stopwords(articles)
         dictionary = corpora.Dictionary(articles)
-        dictionary.save("../../model/ldamodel/dictionary.dict")
+        dictionary.save("model/ldamodel/dictionary.dict")
 
     def calculateKullbackLeibnerDivergence(self, comment, article_url):
         dbinterface = DBInterface()
@@ -52,14 +52,14 @@ class TopicModeling:
         dictionary = corpora.Dictionary(articles)
 
         # calculate bow and save the corpus
-        dictionary.save("../../model/ldamodel/dictionary.dict")
+        dictionary.save("model/ldamodel/dictionary.dict")
 
         corpus = [dictionary.doc2bow(text) for text in articles]
 
         print('starting training')
         self.lda = models.ldamodel.LdaModel(corpus, num_topics=200, alpha='auto')
         # save the trained model
-        self.lda.save('../../model/ldamodel/lda.model')
+        self.lda.save('model/ldamodel/lda.model')
         print('training finished')
 
     def get_diff_for_topics(self, document_topics, comment_topics):
@@ -83,7 +83,10 @@ class TopicModeling:
     def remove_stopwords(self, list):
         cleaned_list = []
         for item in list:
-            item = self.remove_stopwords_for_text(item)
+            if item is not None:
+                item = self.remove_stopwords_for_text(item)
+            else:
+                item = ''
             cleaned_list.append(item)
         return cleaned_list
 
