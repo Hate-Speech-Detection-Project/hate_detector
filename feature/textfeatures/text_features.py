@@ -31,7 +31,8 @@ class TextFeatures:
         self.results = []
 
     def extractFeatures(self, old_df):
-        print('Start exctraction of text-features')
+        print('Start extraction of text-features')
+        self.results = []
         start_time = time.time()
 
         df = old_df[['comment', 'url']]
