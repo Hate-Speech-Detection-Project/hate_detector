@@ -12,3 +12,4 @@ textfeaturematrix.csv
 .idea/
 figures/old
 figures/*.png
+**/*.pickle

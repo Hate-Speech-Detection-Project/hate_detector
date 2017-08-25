@@ -3,6 +3,7 @@ from predictor import Predictor
 import nltk
 import os
 from analysis.roc import ROC
+import pprint
 
 def init_nltk():
     if not os.path.exists('nltk'):
@@ -25,14 +26,14 @@ def execute(dataset='tiny'):
     print("Load Data...")
     train_df, test_df = load_data(dataset)
     predictor = Predictor()
-    print("Fit...")
+    print("Fit... (to speed up, you can comment out features and classifier in predictor.py)")
     predictor.fit(train_df)
     print("Predict...")
     result = predictor.predict(test_df)
     # print("Result:")
     # print(result)
     print("Metrics:")
-    print(predictor.metrics())
+    pprint.PrettyPrinter().pprint(predictor.metrics())
 
     roc = ROC()
     for classifier in result.columns.values:

@@ -15,19 +15,17 @@ class Classifier:
         self.useWeights = useWeights
         self.classes_ = [0, 1]
 
-        self.useCalibration = False;
-
     def fit(self, features, ground_truth):
         self.model = self.algorithm
         if self.useCalibration:
             self.model = CalibratedClassifierCV(self.algorithm)
 
         if self.useWeights:
- #           self.model.fit(features, ground_truth, sample_weight=self.getWeights(ground_truth))
-            unique, counts = np.unique(ground_truth, return_counts=True)
-            classCounts = dict(zip(unique, counts))
-            balanced_samples = self.balanced_sample_maker(features.tocsr(), ground_truth, max(classCounts.values()))
-            self.model.fit(balanced_samples[0], balanced_samples[1])
+           self.model.fit(features, ground_truth, sample_weight=self.getWeights(ground_truth))
+            # unique, counts = np.unique(ground_truth, return_counts=True)
+            # classCounts = dict(zip(unique, counts))
+            # balanced_samples = self.balanced_sample_maker(features.tocsr(), ground_truth, max(classCounts.values()))
+            # self.model.fit(balanced_samples[0], balanced_samples[1])
         else:
             self.model.fit(features, ground_truth)
 
@@ -42,15 +40,12 @@ class Classifier:
             return self.model.predict(features)
 
     def prediction_to_binary(self, prediction):
-        result = prediction > 0.1
+        result = prediction > 0.2
         return result
 
     def getWeights(self, labelArray):
         unique, counts = np.unique(labelArray, return_counts=True)
         classCounts = dict(zip(unique, counts))
-
-        print(len(labelArray))
-        print(classCounts)
 
         weights = [None] * len(labelArray)
 

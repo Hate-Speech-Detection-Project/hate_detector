@@ -3,7 +3,8 @@ import pandas as pd
 from sklearn.metrics import precision_recall_fscore_support
 from scipy.sparse import hstack
 # from numpy import hstack
-from feature.textfeatures.text_features import TextFeatures
+# from feature.textfeatures.text_features import TextFeatures
+from feature.simple_text_features import SimpleTextFeatures
 from feature.ngram_features import NGramFeatures
 from scipy.sparse import csr_matrix
 from feature.word2vec import Word2Vec
@@ -55,9 +56,10 @@ class Predictor:
         # For each classifier, generate some metrics like recall.
         metrics = {}
         for classifier in self.classifier:
+            hate_threshold = np.percentile(predictions[classifier[0]], 20)
             scores = precision_recall_fscore_support(
                 self.ground_truth(df),
-                classifier[1].prediction_to_binary(predictions[classifier[0]]),
+                (predictions[classifier[0]] > hate_threshold).astype(int),
                 average='binary'
             )
             metrics[classifier[0]] = dict(zip(['precision', 'recall', 'f-score', 'support'], scores))
@@ -90,10 +92,10 @@ class Predictor:
         ]
 
         self.classifier = [
-            # ('svr', SVR()),
-            #('svc', SVC()),
-            # ('random forest', RandomForest()),
+            ('svr', SVR()),
+            ('svc', SVC()),
+            ('random forest', RandomForest()),
             ('logistic regression', LogisticRegression()),
-            # ('naive_bayes', NaiveBayes())
+            # ('naive_bayes', NaiveBayes()) # currently not working
         ]
         # self.classifier += [("ensemble_median", HybridEnsemble(self.classifier, 'median'))]

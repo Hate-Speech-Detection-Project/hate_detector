@@ -5,7 +5,6 @@ from feature.textfeatures.text_features import TextFeatures
 class SimpleTextFeatures:
 
   def extractFeatures(self, df):
-    text_features = TextFeatures()
     total_length = df['comment'].apply(lambda x: len(x))
     num_of_words = df['comment'].apply(lambda x: len(x.split()))
     avg_length = df['comment'].apply(lambda x: np.average([len(a) for a in x.split()]))

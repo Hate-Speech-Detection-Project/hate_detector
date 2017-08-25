@@ -1,6 +1,6 @@
 cid,pid,uid,moderated,subject,comment,created,url,fid,timestamp,hate
-1000,0,6001,1,[empty],Das deutsche TV ist auch nicht mehr, was es einmal war.,1451729817,http://www.zeit.de/kultur/film/2015-12/morgen-hoer-ich-auf-pastewka-zdf,4.0,1451730221.0,False
+1000,0,6001,1,[empty],Auch die Kritiker im TV sind überfordert.,1451729817,http://www.zeit.de/kultur/film/2015-12/morgen-hoer-ich-auf-pastewka-zdf,4.0,1451730221.0,False
 1001,0,6002,1,[empty],Hamburg ist voller Nazischweine,1453224439,http://www.zeit.de/2016/01/strassenbeleuchtung-hamburg-lampen-licht-lichtdesign,6.0,1453224672.0,True
 1002,1001,6003,1,[empty],"Absolut dumm, weg mit diesem FDP-honk ins politische Jenseits",1455893092,http://www.zeit.de/politik/deutschland/2016-02/rheinland-pfalz-malu-dreyer-ms-rollstuhl-beleidigung,6.0,1455897184.0,True
-1003,1000,6004,1,[empty],"Ich glaube, Sie gewinnen das Rennen um den letzten Platz.",1451737949,http://www.zeit.de/2016/01/pegida-werbung-luegenpresse-volksgemeinschaft-weltsicht,4.0,1451750932.0,False
+1003,1000,6004,1,[empty],"Ich denke, Sie gewinnen den letzten Platz mit Sicherheit.",1451737949,http://www.zeit.de/2016/01/pegida-werbung-luegenpresse-volksgemeinschaft-weltsicht,4.0,1451750932.0,False
 1004,0,6005,1,[empty],"Verbannen wir diese Menschen ins Jenseits!",1454617776,http://www.zeit.de/politik/deutschland/2016-02/berlin-anschlag-islamismus-live,6.0,1454618404.0,True
