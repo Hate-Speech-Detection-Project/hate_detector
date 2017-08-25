@@ -1,6 +1,13 @@
 # Hate-Speech Detection Framework
 
-### Run the framework
+### Run the framework using Docker
+~~~
+docker build -t hate_speech_framework .
+docker run -v .:/code -t hate_speech_framework
+~~~
+
+
+### Run the framework directly
 ~~~
 # Setup virtualenv with python 3
 python3 -m venv venv
