@@ -3,32 +3,98 @@ import numpy as np
 import psycopg2
 import psycopg2.extras
 import sys
+import datetime
+from timeit import default_timer as timer
 
-file = sys.argv[1]
-data = pd.read_csv(file, sep=',')
-# data.sort_values('created')
+"""
+-- Please execute the following queries on your database before trying this script.
+CREATE INDEX articles_ressort ON articles(ressort);
+CREATE INDEX articles_url ON articles(url);
+CREATE INDEX comments_cid ON comments(cid);
+CREATE INDEX comments_created ON comments(created);
+CREATE INDEX comments_url ON comments(url);
+CREATE INDEX comments_uid ON comments(uid);
+CREATE INDEX comments_hate_uid ON comments(uid) WHERE hate;
+CREATE INDEX comments_hate_created ON comments(created) WHERE hate;
+CREATE INDEX comments_hate_created_uid ON comments(created, uid) WHERE hate;
+CREATE INDEX comments_uid_created ON comments(uid, created);
+CREATE INDEX comments_url_created ON comments(url, created);
+CREATE INDEX comments_url_created_uid ON comments(url, created, uid);
+ALTER TABLE comments ADD COLUMN ressort TEXT;
+-- Attention, takes pretty long (> 20 minutes, potentially)
+UPDATE comments SET ressort = (SELECT MAX(ressort) FROM articles WHERE comments.url = articles.url);
+CREATE INDEX comments_ressort ON comments(ressort);
+CREATE INDEX comments_uid_created_ressort ON comments(ressort, uid, created);
+CREATE INDEX comments_hate_uid_created_ressort ON comments(ressort, uid, created) WHERE hate;
+"""
+
+BATCH_SIZE = 100000
+
+# Output timestamp on every print.
+def uprint(text):
+  print('{:%Y-%m-%d %H:%M:%S}  '.format(datetime.datetime.now()) + text)
+  sys.stdout.flush()
 
 # Connect to the database.
+uprint("Connecting to database...")
 try:
-    conn = psycopg2.connect("dbname='zeit_online' user='mp2017' host='localhost' password='seC_ur3T0ken!'")
+    conn = psycopg2.connect("dbname='postgres' user='postgres' host='localhost' password='admin'")
 except:
-    print("Cannot connect to database")
+    uprint("Cannot connect to database.")
     sys.exit(0)
-print("Connected to database")
+uprint("Connected to database.")
 
-# Create a temporary view in the database with the comments in the dataset.
+# Define the procedure for getting the thread depth of an article.
 with conn.cursor() as cursor:
   cursor.execute(
     """
-    CREATE TEMPORARY VIEW temp_comments AS
-    SELECT * FROM comments
-    WHERE cid IN (%s)
-    ORDER BY created
-    """ % (','.join([str(row['cid']) for index, row in data.iterrows()]))
+    CREATE OR REPLACE FUNCTION thread_depth (p_cid INTEGER)
+      RETURNS INTEGER AS $$
+    DECLARE
+      counter INTEGER := 0;
+      cur_pid INTEGER := 0;
+    BEGIN 
+      LOOP EXIT WHEN FALSE;
+        SELECT pid FROM comments WHERE cid = p_cid INTO cur_pid;
+        IF (cur_pid = 0 OR cur_pid IS NULL) THEN
+          EXIT;
+        ELSE
+          SELECT cur_pid INTO p_cid;
+          SELECT counter + 1 INTO counter;
+        END IF;
+      END LOOP;
+      RETURN counter;
+    END;
+    $$ LANGUAGE plpgsql;
+    """
   )
 
 # Define the feature queries.
 queries = [(
+  # cid for later joining.
+  'cid',
+  """
+  SELECT cid
+  FROM temp_comments
+  ORDER BY cid
+  """
+),(
+  # Ressort.
+  'ressort',
+  """
+  SELECT ressort
+  FROM temp_comments
+  ORDER BY cid
+  """
+),(
+  # Thread depth.
+  'thread_depth',
+  """
+  SELECT thread_depth(cid)
+  FROM temp_comments
+  ORDER BY cid
+  """
+),(
   # Time since last comment (by anyone) on same article.
   'time_since_last_comment',
   """
@@ -39,7 +105,21 @@ queries = [(
     AND outside.created > inside.created
   )
   FROM temp_comments AS outside
-  ORDER BY created
+  ORDER BY cid
+  """
+),(
+  # Time since last hate comment (by anyone) on same article.
+  'time_since_last_hate_comment',
+  """
+  SELECT outside.created - (
+    SELECT COALESCE(MAX(inside.created), outside.created)
+    FROM comments AS inside
+    WHERE outside.url = inside.url
+    AND outside.created > inside.created
+    AND inside.hate
+  )
+  FROM temp_comments AS outside
+  ORDER BY cid
   """
 ),(
   # Time since last comment (by same user) on same article.
@@ -53,7 +133,7 @@ queries = [(
     AND outside.uid = inside.uid
   )
   FROM temp_comments AS outside
-  ORDER BY created
+  ORDER BY cid
   """
 ),(
   # Time since last hate comment (by same user) on same article.
@@ -68,7 +148,7 @@ queries = [(
     AND inside.hate
   )
   FROM temp_comments AS outside
-  ORDER BY created
+  ORDER BY cid
   """
 ),(
   # Time since last comment (by same user) on any article.
@@ -81,7 +161,7 @@ queries = [(
     AND outside.uid = inside.uid
   )
   FROM temp_comments AS outside
-  ORDER BY created
+  ORDER BY cid
   """
 ),(
   # Time since last hate comment (by same user) on any article.
@@ -95,7 +175,7 @@ queries = [(
     AND inside.hate
   )
   FROM temp_comments AS outside
-  ORDER BY created
+  ORDER BY cid
   """
 ),(
   # Time since creation of the corresponding article.
@@ -103,7 +183,7 @@ queries = [(
   """
   SELECT temp_comments.created - COALESCE(EXTRACT(EPOCH FROM articles.publish_date), temp_comments.created)
   FROM temp_comments LEFT JOIN articles USING (url)
-  ORDER BY created
+  ORDER BY cid
   """
 ),(
   # Number of comments by user at the time of writing the comment.
@@ -116,7 +196,7 @@ queries = [(
     AND inside.created < outside.created
   )
   FROM temp_comments AS outside
-  ORDER BY created
+  ORDER BY cid
   """
 ),(
   # Number of comments by user in the same ressort at the time of writing the comment.
@@ -124,13 +204,13 @@ queries = [(
   """
   SELECT (
     SELECT COUNT(1)
-    FROM comments AS inside LEFT JOIN articles AS inside_articles USING (url)
+    FROM comments AS inside
     WHERE inside.uid = outside.uid
     AND inside.created < outside.created
-  AND inside_articles.ressort = outside_articles.ressort
+    AND inside.ressort = outside.ressort
   )
-  FROM temp_comments AS outside LEFT JOIN articles AS outside_articles USING (url)
-  ORDER BY created
+  FROM temp_comments AS outside
+  ORDER BY cid
   """
 ),(
   # Number of hate comments by user at the time of writing the comment.
@@ -144,7 +224,7 @@ queries = [(
     AND inside.hate
   )
   FROM temp_comments AS outside
-  ORDER BY created
+  ORDER BY cid
   """
 ),(
   # Number of hate comments by user in the same ressort at the time of writing the comment.
@@ -152,50 +232,70 @@ queries = [(
   """
   SELECT (
     SELECT COUNT(1)
-    FROM comments AS inside LEFT JOIN articles AS inside_articles USING (url)
-    WHERE inside.uid = outside.uid
-  AND inside.hate
-    AND inside.created < outside.created
-  AND inside_articles.ressort = outside_articles.ressort
-  )
-  FROM temp_comments AS outside LEFT JOIN articles AS outside_articles USING (url)
-  ORDER BY created
-  """
-),(
-  # Share of hate comments by user at the time of writing the comment.
-  # TODO This could also be aggregated from the other features, would save time.
-  'share_of_hate_comments_by_user',
-  """
-  SELECT ((
-    SELECT COUNT(1)
     FROM comments AS inside
     WHERE inside.uid = outside.uid
     AND inside.created < outside.created
+    AND inside.ressort = outside.ressort
     AND inside.hate
-  )::real / (
-    SELECT GREATEST(1, COUNT(1))
-    FROM comments AS inside
-    WHERE inside.uid = outside.uid
-    AND inside.created < outside.created
-  )::real) AS hate_share
+  )
   FROM temp_comments AS outside
-  ORDER BY created
+  ORDER BY cid
   """
 )]
 
-# Execute the queries and cache the results.
 def execute_query(query):
   with conn.cursor() as cursor:
     cursor.execute(query)
     return [x[0] for x in cursor.fetchall()]
-results = [execute_query(query[1]) for query in queries]
 
-# Create a nice dataframe with all the data.
-data_result = pd.DataFrame(results)
-data_result = data_result.transpose()
-data_result.columns = [query[0] for query in queries]
-data = data.join(data_result)
+def augment(df, file, first=True):
+  # Create a temporary view in the database with the comments in the dataset.
+  with conn.cursor() as cursor:
+    cursor.execute(
+      """
+      DROP VIEW IF EXISTS temp_comments
+      """
+    )
+    cursor.execute(
+      """
+      CREATE TEMPORARY VIEW temp_comments AS
+      SELECT * FROM comments
+      WHERE cid IN (%s)
+      ORDER BY created
+      """ % (','.join([str(row['cid']) for index, row in df.iterrows()]))
+    )
+    
+  # Execute the queries and cache the results.
+  results = []
+  for query in queries:
+    start = timer()
+    results.append(execute_query(query[1]))
+    end = timer()
+    uprint("   " + query[0] + ": " + "%.2f" % (end - start))
 
-# Output file.
-data.to_csv(file + '.augmented.csv', encoding='utf-8', index=False)
-print("Done")
+  # Create a nice dataframe with all the data.
+  data_result = pd.DataFrame(results)
+  data_result = data_result.transpose()
+  data_result.columns = [query[0] for query in queries]
+  df = df.merge(data_result, how='left', on='cid')
+
+  # Output file.
+  file_name = file + '.augmented.csv'
+  if first:
+    df.to_csv(file_name, encoding='utf-8', index=False)
+  else:
+    df.to_csv(file_name, encoding='utf-8', index=False, header=False, mode='a')
+
+# Read the file we want to augment.
+uprint("Loading file...")
+file = sys.argv[1]
+data = pd.read_csv(file, sep=',')
+uprint("File loaded...")
+
+# Split the dataset up into chunks determined by BATCH_SIZE.
+row_count = len(data.index)
+for index in range(0, row_count, BATCH_SIZE):
+  augment(data.iloc[index:index+BATCH_SIZE, :], file, index == 0)
+  uprint("Augmented %i rows starting at %i." % (BATCH_SIZE, index))
+
+uprint("Done!")

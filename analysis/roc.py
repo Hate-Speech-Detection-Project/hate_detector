@@ -1,7 +1,3 @@
-from sklearn import metrics
-import numpy as np
-import matplotlib
-matplotlib.use('agg')
 import matplotlib.pyplot as plt
 from sklearn.metrics import roc_curve, auc
 import time
@@ -18,7 +14,7 @@ class ROC:
     def calculate(self, predicted, ground_truth):
         self.predicted = predicted
         self.ground_truth = ground_truth
-        self.fpr, self.tpr, self.thresholds = metrics.roc_curve(ground_truth, predicted)
+        self.fpr, self.tpr, self.thresholds = roc_curve(ground_truth, predicted)
         return (self.fpr, self.tpr, self.thresholds)
 
     def print(self, label):

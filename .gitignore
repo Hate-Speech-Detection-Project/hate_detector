@@ -1,4 +1,6 @@
 data/*
+!data/test
+!data/stopwords_de.txt
 nltk/*
 figures/*.png
 venv/
@@ -10,3 +12,5 @@ textfeaturematrix.csv
 .idea/
 figures/old
 figures/*.png
+**/*.pickle
+model/ldamodel/*
