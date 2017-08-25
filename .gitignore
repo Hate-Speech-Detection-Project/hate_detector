@@ -13,3 +13,4 @@ textfeaturematrix.csv
 figures/old
 figures/*.png
 **/*.pickle
+model/ldamodel/*
