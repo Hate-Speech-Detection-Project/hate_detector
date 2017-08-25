@@ -1,4 +1,6 @@
 data/*
+!data/test
+!data/stopwords_de.txt
 nltk/*
 figures/*.png
 venv/

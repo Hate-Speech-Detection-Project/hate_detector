@@ -42,15 +42,16 @@ def execute(dataset='tiny'):
 def main():
     init_nltk()
     datasets = [
+       'test',
        # 'tiny',
        # '1000',
-#        '10000',
-       '100000',
-#        'stratified',
-#        'stratified_1000',
-#        'stratified_10000',
-#        'stratified_30000',
-#        'all'
+       # '10000',
+       # '100000',
+       # 'stratified',
+       # 'stratified_1000',
+       # 'stratified_10000',
+       # 'stratified_30000',
+       # 'all'
     ]
     for dataset in datasets:
         execute(dataset)
