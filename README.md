@@ -3,7 +3,7 @@
 ### Run the framework using Docker
 ~~~
 docker build -t hate_speech_framework .
-docker run -v .:/code -t hate_speech_framework
+docker run -t hate_speech_framework
 ~~~
 
 
