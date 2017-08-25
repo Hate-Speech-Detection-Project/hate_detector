@@ -16,6 +16,11 @@ source venv/bin/activate # assumes using bash
 # Install requirements
 pip install -r requirements.txt
 
+# Install nltk data
+mkdir -p nltk
+NLTK_DATA=./nltk
+python -m nltk.downloader stopwords
+
 # Run framework
 python .
 ~~~
