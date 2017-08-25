@@ -31,11 +31,13 @@ class TextFeatures:
         self.results = []
 
     def extractFeatures(self, old_df):
-        print('Start exctraction of text-features')
+        print('Start extraction of text-features')
+        self.results = []
         start_time = time.time()
 
         df = old_df[['comment', 'url']]
-        self.df_parts = np.array_split(df, CORE_THREADS_NUM)
+        # self.df_parts = np.array_split(df, CORE_THREADS_NUM)
+        self.df_parts = np.array_split(df, 10)
 
 
         tagged_comments = self._tagComments()
@@ -50,7 +52,7 @@ class TextFeatures:
 
         print("--- Took %s seconds ---" % (time.time() - start_time))
         features = np.vstack(self.results).T
-        self.show_correlation_heat_map(features, old_df)
+        # self.show_correlation_heat_map(features, old_df)
 
         return features
 
@@ -223,14 +225,14 @@ class TextFeatures:
         topic_features = TopicFeatures()
         list = []
         for index, row in df.iterrows():
-            list.append(int(topic_features.get_cos_similarity_for_article(row['comment'], row['url'])))
+            list.append(int(topic_features.get_cos_similarity_for_article(row['comment'] + ' nostop', row['url'])))
         cos_list[result_index] = list
 
     def _calculate_hate_cos_similarity(self, df, cos_list, result_index):
         topic_features = TopicFeatures()
         list = []
         for index, row in df.iterrows():
-            list.append(int(topic_features.get_cos_similarity_for_hate_comments_of_article(row['comment'], row['url'])))
+            list.append(int(topic_features.get_cos_similarity_for_hate_comments_of_article(row['comment'] + ' nostop', row['url'])))
         cos_list[result_index] = list
 
     def _calculateFeatureFromTopicModel(self, df):
@@ -243,14 +245,14 @@ class TextFeatures:
 
         list = []
         for index, row in df.iterrows():
-            list.append(topic_model.calculateKullbackLeibnerDivergence(row['comment'], row['url']))
+            list.append(topic_model.calculateKullbackLeibnerDivergence(row['comment'] + ' nostop', row['url']))
 
         self.results.insert(Resultindices.KULLBACK_LEIBLER_DIVERGENCE_TO_ARTICLE.value, list)
 
     def _applyTopicModel(self,df,result_list, index, topic_model):
         list = []
         for index, row in df.iterrows():
-            list.append(topic_model.calculateKullbackLeibnerDivergence(row['comment'], row['url']))
+            list.append(topic_model.calculateKullbackLeibnerDivergence(row['comment'] + ' nostop', row['url']))
         result_list[index] = list
 
 

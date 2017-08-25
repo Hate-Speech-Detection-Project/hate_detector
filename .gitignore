@@ -1,3 +1,12 @@
 data/*
 nltk/*
 figures/*.png
+venv/
+nightshift.sh
+textfeaturematrix.csv
+**/.DS_Store
+**/._.DS_Store
+**/__pycache__
+.idea/
+figures/old
+figures/*.png

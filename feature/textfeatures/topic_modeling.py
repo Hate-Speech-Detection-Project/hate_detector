@@ -11,8 +11,8 @@ class TopicModeling:
             self.stopwords.append(row.replace('\n', '').replace('\r', ''))
 
         try:
-            self.dict = corpora.Dictionary().load('../../model/ldamodel/dictionary.dict')
-            self.lda = models.LdaModel.load('../../model/ldamodel/lda.model')
+            self.dict = corpora.Dictionary().load('model/ldamodel/dictionary.dict')
+            self.lda = models.LdaModel.load('model/ldamodel/lda.model')
             return True
         except:  # handle other exceptions such as attribute errors
             warnings.warn(
@@ -81,7 +81,7 @@ class TopicModeling:
         return 0
 
     def remove_stopwords(self, list):
-        cleaned_list = []
+        cleaned_list = ['notempty']  #fix error when it only contains stopwords
         for item in list:
             if item is not None:
                 item = self.remove_stopwords_for_text(item)

@@ -16,8 +16,8 @@ def init_nltk():
             nltk.download(package, os.getcwd() + '/nltk')
 
 def load_data(dataset='tiny'):
-    train_df = pd.read_csv('data/' + dataset + '/train.csv', sep=',')
-    test_df = pd.read_csv('data/' + dataset + '/test.csv', sep=',')
+    train_df = pd.read_csv('data/' + dataset + '/train.csv', sep=',').dropna(subset=['comment', 'url'])
+    test_df = pd.read_csv('data/' + dataset + '/test.csv', sep=',').dropna(subset=['comment', 'url'])
     return (train_df, test_df)
 
 def execute(dataset='tiny'):
@@ -42,15 +42,15 @@ def execute(dataset='tiny'):
 def main():
     init_nltk()
     datasets = [
-        'tiny',
-        '1000',
-        '10000',
-        '100000',
-        'stratified',
-        'stratified_1000',
-        'stratified_10000',
-        'stratified_30000',
-        'all'
+       # 'tiny',
+       # '1000',
+#        '10000',
+       '100000',
+#        'stratified',
+#        'stratified_1000',
+#        'stratified_10000',
+#        'stratified_30000',
+#        'all'
     ]
     for dataset in datasets:
         execute(dataset)

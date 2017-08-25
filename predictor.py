@@ -16,6 +16,8 @@ from classifier.random_forest import RandomForest
 from classifier.logistic_regression import LogisticRegression
 from scheduler import Scheduler
 from multiprocessing import Pool
+import pickle
+import time
 
 
 class Predictor:
@@ -30,11 +32,13 @@ class Predictor:
 
         processes = [None] * len(self.classifier)
         for index, classifier in enumerate(self.classifier):
-            processes[index] = pool.apply_async(classifier[1].fit, (feature_matrix, self.ground_truth(df))) 
+            processes[index] = pool.apply_async(classifier[1].fit, (feature_matrix, self.ground_truth(df)))
 
         for index, trainedClassifier in enumerate(processes):
             classifier = trainedClassifier.get()
             self.classifier[index] = (classifier.name, classifier,)
+            f = open('trained_classifiers/' + str(df.shape[0]) + '_' + classifier.name + '_' + str(int(time.time())) + '.pickle', 'wb')
+            pickle.dump(classifier, f)
 
     def predict(self, df):
         '''
@@ -79,16 +83,17 @@ class Predictor:
         self.scheduler = Scheduler()
 
         self.features = [
-            #('text_features', TextFeatures()),
+            # ('text_features', TextFeatures()), # DB instance needed for these features
+            ('text_features', SimpleTextFeatures()),
             ('word2vec', Word2Vec()),
             ('ngram_features', NGramFeatures())
         ]
 
         self.classifier = [
-            ('svr', SVR()),
-            ('svc', SVC()),
-            ('random forest', RandomForest()),
+            # ('svr', SVR()),
+            #('svc', SVC()),
+            # ('random forest', RandomForest()),
             ('logistic regression', LogisticRegression()),
             # ('naive_bayes', NaiveBayes())
         ]
-        self.classifier += [("ensemble_median", HybridEnsemble(self.classifier, 'median'))]
+        # self.classifier += [("ensemble_median", HybridEnsemble(self.classifier, 'median'))]
