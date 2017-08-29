@@ -31,6 +31,7 @@ class Predictor:
         '''
 
         pool = Pool(processes=4)
+        print(", ".join([feature[0] for feature in self.features]))
         feature_matrix = self.calculate_feature_matrix(df)
         print("...using", feature_matrix.shape, "features from", ", ".join([feature[0] for feature in self.features]))
 
@@ -94,7 +95,9 @@ class Predictor:
         # normalize(scaled_feature_matrix, norm='l2', axis=0, copy=False)
         self.feature_matrix = feature_matrix
         # code.interact(local=locals())
-        return np.nan_to_num(feature_matrix)
+        feature_matrix.data = np.nan_to_num(feature_matrix.data)
+        feature_matrix.eliminate_zeros()
+        return feature_matrix
 
     def __init__(self):
         self.scheduler = Scheduler()
