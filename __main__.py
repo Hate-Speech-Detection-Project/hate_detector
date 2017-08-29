@@ -6,6 +6,7 @@ import nltk
 import os
 from analysis.roc import ROC
 import pprint
+import code
 
 def init_nltk():
     if not os.path.exists('nltk'):
@@ -19,8 +20,13 @@ def init_nltk():
             nltk.download(package, os.getcwd() + '/nltk')
 
 def load_data(dataset='tiny'):
-    train_df = pd.read_csv('data/' + dataset + '/train.csv', sep=',').dropna(subset=['comment', 'url'])
-    test_df = pd.read_csv('data/' + dataset + '/test.csv', sep=',').dropna(subset=['comment', 'url'])
+    # train_df = pd.read_csv('data/' + dataset + '/train.csv', sep=',').dropna(subset=['comment', 'url'])
+    # test_df = pd.read_csv('data/' + dataset + '/test.csv', sep=',').dropna(subset=['comment', 'url'])
+    train_df = pd.read_csv('../evaluation_data/train.csv.augmented.csv', sep=',').dropna(subset=['comment', 'url'])
+    test_df = pd.read_csv('../evaluation_data/test.csv.augmented.csv', sep=',').dropna(subset=['comment', 'url'])
+
+    train_df['ressort'].fillna('unknown', inplace=True)
+    test_df['ressort'].fillna('unknown', inplace=True)
     return (train_df, test_df)
 
 def execute(dataset='tiny'):
@@ -42,10 +48,12 @@ def execute(dataset='tiny'):
         roc.calculate(result[classifier], test_df['hate'])
         roc.print(dataset + ' using ' + classifier)
 
+    code.interact(local=locals())
+
 def main():
     init_nltk()
     datasets = [
-       'test',
+       # 'test',
        # 'tiny',
        # '1000',
        # '10000',
@@ -54,7 +62,8 @@ def main():
        # 'stratified_1000',
        # 'stratified_10000',
        # 'stratified_30000',
-       # 'all'
+       # 'all',
+        'all features, (3,5)-ngrams, min=50',
     ]
     for dataset in datasets:
         execute(dataset)

@@ -4,8 +4,10 @@ from sklearn.metrics import precision_recall_fscore_support
 from scipy.sparse import hstack
 # from numpy import hstack
 # from feature.textfeatures.text_features import TextFeatures
+from feature.user_features import UserFeatures
 from feature.simple_text_features import SimpleTextFeatures
 from feature.ngram_features import NGramFeatures
+from feature.character_ngram_features import CharacterNGramFeatures
 from scipy.sparse import csr_matrix
 from feature.word2vec import Word2Vec
 from classifier.svr import SVR
@@ -18,6 +20,7 @@ from classifier.logistic_regression import LogisticRegression
 from scheduler import Scheduler
 from multiprocessing import Pool
 import pickle
+import code
 import time
 
 
@@ -66,6 +69,16 @@ class Predictor:
 
         self._metrics = metrics
 
+        for threshold in range(0, 100, 10):
+            hate_threshold = np.percentile(predictions, threshold)
+            print("Threshold", hate_threshold)
+            scores = precision_recall_fscore_support(
+                df['hate'],
+                (predictions > hate_threshold).astype(int),
+                average='binary'
+            )
+            print("Scores:", dict(zip(['precision', 'recall', 'f-score', 'support'], scores)))
+
         return predictions
 
     def metrics(self):
@@ -76,25 +89,29 @@ class Predictor:
 
     def calculate_feature_matrix(self, df):
         feature_matrix = hstack([feature[1].extractFeatures(df) for feature in self.features])
-        scaler = MaxAbsScaler()
-        scaled_feature_matrix = scaler.fit_transform(feature_matrix)
-        normalize(scaled_feature_matrix, norm='l2', axis=0, copy=False)
-        return feature_matrix
+        # scaler = MaxAbsScaler()
+        # scaled_feature_matrix = scaler.fit_transform(feature_matrix)
+        # normalize(scaled_feature_matrix, norm='l2', axis=0, copy=False)
+        self.feature_matrix = feature_matrix
+        # code.interact(local=locals())
+        return np.nan_to_num(feature_matrix)
 
     def __init__(self):
         self.scheduler = Scheduler()
 
         self.features = [
             # ('text_features', TextFeatures()), # DB instance needed for these features
+            ('character_ngram_features', CharacterNGramFeatures()),
             ('text_features', SimpleTextFeatures()),
             ('word2vec', Word2Vec()),
-            ('ngram_features', NGramFeatures())
+            ('ngram_features', NGramFeatures()),
+            ('user_features', UserFeatures()),
         ]
 
         self.classifier = [
-            ('svr', SVR()),
-            ('svc', SVC()),
-            ('random forest', RandomForest()),
+            # ('svr', SVR()),
+            # ('svc', SVC()),
+            # ('random forest', RandomForest()),
             ('logistic regression', LogisticRegression()),
             # ('naive_bayes', NaiveBayes()) # currently not working
         ]
