@@ -32,7 +32,7 @@ class Predictor:
 
         pool = Pool(processes=4)
         feature_matrix = self.calculate_feature_matrix(df)
-        print("...using", feature_matrix.shape[1], "features from", ", ".join([feature[0] for feature in self.features]))
+        print("...using", feature_matrix.shape, "features from", ", ".join([feature[0] for feature in self.features]))
 
         processes = [None] * len(self.classifier)
         for index, classifier in enumerate(self.classifier):
