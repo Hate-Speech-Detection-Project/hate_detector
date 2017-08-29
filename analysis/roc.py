@@ -31,5 +31,6 @@ class ROC:
         plt.ylabel('True Positive Rate')
         plt.title('Receiver operating characteristic')
         plt.legend(loc="lower right")
-        plt.savefig('figures/roc_' + str(int(time.time())) + str(label) + '.png')
+        plt.tight_layout()
+        plt.savefig('figures/roc_' + str(label) + '_' + str(int(time.time())) + '.png')
         # plt.show()
