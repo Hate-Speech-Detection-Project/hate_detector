@@ -82,7 +82,7 @@ class DBInterface:
         cur = self.conn.cursor()
         cur.execute(
             """
-                  SELECT body FROM articles;
+                  SELECT text FROM articles;
             """
         )
         self.conn.commit()
