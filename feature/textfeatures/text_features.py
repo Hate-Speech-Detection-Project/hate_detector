@@ -33,11 +33,11 @@ class TextFeatures:
         print('Loading article_dataframe and comment_dataframe for text-features')
 
         self.articles = pd.read_csv(
-            '../../data/articles/articles.csv', sep=',',
+            '../data/articles/articles.csv', sep=',',
             usecols=["text", "url"])
 
         self.all_comments = pd.read_csv(
-            '../../data/dataset.csv', sep=',',
+            '../data/dataset.csv', sep=',',
             usecols=['cid', 'comment', 'url', 'hate'])
 
     def extractFeatures(self, old_df):
@@ -50,14 +50,14 @@ class TextFeatures:
         tagged_comments = self._tagComments(df)
         self._calculateSemanticFeatures(tagged_comments)
 
-        self._calculateCosSimilarity(df, self.articles)
+        self._calculateCosSimilarity(df)
 
         self._calculateSyntaxFeatures(df)
 
         self._calculateFeatureFromTopicModel(old_df)
 
 
-        print("--- Took %s seconds ---" % (time.time() - start_time))
+        print("--- Took %s seconds to calculate text-features ---" % (time.time() - start_time))
         features = np.vstack(self.results).T
 
         # self.show_correlation_heat_map(features, old_df)
@@ -99,26 +99,23 @@ class TextFeatures:
         self.startProcessesAndJoinThem(threads)
         threads.clear()
 
-    def _calculateCosSimilarity(self, df, article_df):
+    def _calculateCosSimilarity(self, df):
 
-        # join the article and commment-data by url
-        self.merged_df = df.join(article_df.set_index('url'), on='url')
-        #
         # calculate similarity for article in combination with comment
         pool = Pool(processes=CORE_THREADS_NUM)
-        result = pool.map(TextFeatures.calculateCosSimilarityForArticleAndComment,
-                          list(zip(self.merged_df.comment, self.merged_df.text)))
+        result = pool.map(self.calculateCosSimilarityForArticleAndComment,
+                          list(zip(df['comment'],df['url'])))
         self.results.insert(Resultindices.COS_SIMILARITY_ARTICLE.value, result)
 
         pool = Pool(processes=CORE_THREADS_NUM)
         result = pool.map(self.calculateCosSimilarityForArticleAndHateCommentsOfArticle,
-                          list(zip(self.merged_df.comment, self.merged_df.url)))
+                          list(zip(df['comment'], df['url'])))
         self.results.insert(Resultindices.COS_SIMILARITY_HATE_COMMENTS.value, result)
 
-    def calculateCosSimilarityForArticleAndHateCommentsOfArticle(self, comment_hatecomments_tupel):
+    def calculateCosSimilarityForArticleAndHateCommentsOfArticle(self, comment_url_tupel):
 
-        comment = comment_hatecomments_tupel[0]
-        url = comment_hatecomments_tupel[1]
+        comment = comment_url_tupel[0]
+        url = comment_url_tupel[1]
 
         # use "==" True instead of "is", otherwise it will not work (don't ask me why)
         hate_comments = self.all_comments[self.all_comments['hate'] == True]
@@ -272,9 +269,9 @@ class TextFeatures:
         tags = TextBlob(comment).tags
         return tags
 
-    @staticmethod
-    def calculateCosSimilarityForArticleAndComment(comment_article_tupel):
+    def calculateCosSimilarityForArticleAndComment(self,comment_url_tupel):
         topic_features = TopicFeatures()
-        comment = comment_article_tupel[0]
-        article_text = comment_article_tupel[1]
-        return topic_features.get_cos_similarity_for_article(comment, article_text)
+        comment_text = comment_url_tupel[0]
+        article_url = comment_url_tupel[1]
+        article_text = self.articles[self.articles['url'] == article_url].text
+        return topic_features.get_cos_similarity_for_article(comment_text, article_text)
