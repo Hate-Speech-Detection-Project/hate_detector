@@ -33,12 +33,10 @@ class TextFeatures:
         print('Loading article_dataframe and comment_dataframe for text-features')
 
         self.articles = pd.read_csv(
-            '../data/articles/articles.csv', sep=',',
-            usecols=["text", "url"])
+            '../articles.csv', sep=',',
+            usecols=["body", "url"])
 
-        self.all_comments = pd.read_csv(
-            '../data/dataset.csv', sep=',',
-            usecols=['cid', 'comment', 'url', 'hate'])
+        self.articles["text"] = self.articles["body"]
 
     def extractFeatures(self, old_df):
         print('Start extraction of text-features')
@@ -46,18 +44,15 @@ class TextFeatures:
         start_time = time.time()
 
         df = old_df[['cid', 'comment', 'url', 'hate']]
+        self.all_comments = df
 
         tagged_comments = self._tagComments(df)
+        self._calculateFeatureFromTopicModel(old_df)
         self._calculateSemanticFeatures(tagged_comments)
-
         self._calculateCosSimilarity(df)
-
         self._calculateSyntaxFeatures(df)
 
-        self._calculateFeatureFromTopicModel(old_df)
-
-
-        print("--- Took %s seconds to calculate text-features ---" % (time.time() - start_time))
+        # print("--- Took %s seconds to calculate text-features ---" % (time.time() - start_time))
         features = np.vstack(self.results).T
 
         # self.show_correlation_heat_map(features, old_df)
@@ -203,14 +198,14 @@ class TextFeatures:
 
         list = []
         for index, row in df.iterrows():
-            list.append(topic_model.calculateKullbackLeibnerDivergence(row['comment'] + ' nostop', row['url']))
+            list.append(topic_model.calculateKullbackLeibnerDivergence(row['comment'] + ' nostop', row['url'], self.articles))
 
         self.results.insert(Resultindices.KULLBACK_LEIBLER_DIVERGENCE_TO_ARTICLE.value, list)
 
     def _applyTopicModel(self, df, result_list, index, topic_model):
         list = []
         for index, row in df.iterrows():
-            list.append(topic_model.calculateKullbackLeibnerDivergence(row['comment'] + ' nostop', row['url']))
+            list.append(topic_model.calculateKullbackLeibnerDivergence(row['comment'] + ' nostop', row['url'], self.articles))
         result_list[index] = list
 
     def show_correlation_heat_map(self, feature_matrix, df):

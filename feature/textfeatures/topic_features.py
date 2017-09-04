@@ -33,7 +33,8 @@ class TopicFeatures:
 
         if len(hate_comments) != 0 and type(comment) is str:
 
-            hate_comments_corpus = ''
+            comment = comment + ' nostop'
+            hate_comments_corpus = 'nostop'
             for hate_comment in hate_comments:
                 hate_comments_corpus += ' ' + hate_comment
 
