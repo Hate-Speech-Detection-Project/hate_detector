@@ -8,7 +8,6 @@ docker build -t hate_speech_framework .
 docker run -t hate_speech_framework
 ~~~
 
-
 ### Run the framework directly
 ~~~bash
 # Setup virtualenv with python 3
