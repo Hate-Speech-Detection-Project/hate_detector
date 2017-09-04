@@ -71,20 +71,20 @@ class Predictor:
 
         self._metrics = metrics
 
-        with open("measurements.txt", "a") as measurements_file:
-            measurements_file.write(", ".join([feature[0] for feature in self.features]) + "\n\n")
-            for threshold in range(0, 100, 10):
-                hate_threshold = np.percentile(predictions, threshold)
-                print("Threshold", hate_threshold)
-                scores = precision_recall_fscore_support(
-                    df['hate'],
-                    (predictions > hate_threshold).astype(int),
-                    average='binary'
-                )
-                print("Scores:", dict(zip(['precision', 'recall', 'f-score', 'support'], scores)))
-                measurements_file.write("Threshold" + str(hate_threshold) + "\n")
-                measurements_file.write(str(dict(zip(['precision', 'recall', 'f-score', 'support'], scores))) + "\n")
-            measurements_file.write("#" * 80 + "\n\n")
+        # with open("measurements.txt", "a") as measurements_file:
+        #     measurements_file.write(", ".join([feature[0] for feature in self.features]) + "\n\n")
+        #     for threshold in range(0, 100, 10):
+        #         hate_threshold = np.percentile(predictions, threshold)
+        #         print("Threshold", hate_threshold)
+        #         scores = precision_recall_fscore_support(
+        #             df['hate'],
+        #             (predictions > hate_threshold).astype(int),
+        #             average='binary'
+        #         )
+        #         print("Scores:", dict(zip(['precision', 'recall', 'f-score', 'support'], scores)))
+        #         measurements_file.write("Threshold" + str(hate_threshold) + "\n")
+        #         measurements_file.write(str(dict(zip(['precision', 'recall', 'f-score', 'support'], scores))) + "\n")
+        #     measurements_file.write("#" * 80 + "\n\n")# 
 
         return predictions
 
