@@ -3,7 +3,7 @@ import pandas as pd
 from sklearn.metrics import precision_recall_fscore_support
 from scipy.sparse import hstack
 # from numpy import hstack
-# from feature.textfeatures.text_features import TextFeatures
+from feature.textfeatures.text_features import TextFeatures
 from feature.user_features import UserFeatures
 from feature.simple_text_features import SimpleTextFeatures
 from feature.ngram_features import NGramFeatures
@@ -115,7 +115,6 @@ class Predictor:
             # ('text_features', SimpleTextFeatures()),
             # ('word2vec', Word2Vec()),
             # ('ngram_features', NGramFeatures()),
-            ('user_features', UserFeatures()),
         ]
 
         self.classifier = [

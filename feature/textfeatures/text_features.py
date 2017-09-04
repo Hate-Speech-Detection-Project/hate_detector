@@ -1,7 +1,7 @@
 import time
 from enum import Enum
 from itertools import chain
-from multiprocessing import Process, Manager, cpu_count
+from multiprocessing import Process, Manager, cpu_count, Pool
 from threading import Thread
 import numpy as np
 from feature.textfeatures.topic_features import TopicFeatures
@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 import sys
 from feature.textfeatures.topic_modeling import TopicModeling
 
-CORE_THREADS_NUM = cpu_count()
+CORE_THREADS_NUM = 2
 RESULT_COUNT = 17
 
 
@@ -30,32 +30,43 @@ class TextFeatures:
         self.topic_features = TopicFeatures()
         self.results = []
 
+        print('Loading article_dataframe and comment_dataframe for text-features')
+
+        self.articles = pd.read_csv(
+            '../data/articles/articles.csv', sep=',',
+            usecols=["text", "url"])
+
+        self.all_comments = pd.read_csv(
+            '../data/dataset.csv', sep=',',
+            usecols=['cid', 'comment', 'url', 'hate'])
+
     def extractFeatures(self, old_df):
         print('Start extraction of text-features')
         self.results = []
         start_time = time.time()
 
-        df = old_df[['comment', 'url']]
-        # self.df_parts = np.array_split(df, CORE_THREADS_NUM)
-        self.df_parts = np.array_split(df, 10)
+        df = old_df[['cid', 'comment', 'url', 'hate']]
 
-
-        tagged_comments = self._tagComments()
+        tagged_comments = self._tagComments(df)
         self._calculateSemanticFeatures(tagged_comments)
 
-        self._calculateCosSimilarity()
+        self._calculateCosSimilarity(df)
 
         self._calculateSyntaxFeatures(df)
 
         self._calculateFeatureFromTopicModel(old_df)
 
 
-        print("--- Took %s seconds ---" % (time.time() - start_time))
+        print("--- Took %s seconds to calculate text-features ---" % (time.time() - start_time))
         features = np.vstack(self.results).T
+
         # self.show_correlation_heat_map(features, old_df)
 
         return features
 
+    def _tagComments(self, df):
+        pool = Pool(processes=CORE_THREADS_NUM)
+        return pool.map(TextFeatures.tagCommentsForSemanticAnalysis, df['comment'].tolist())
 
     def _calculateSemanticFeatures(self, tagged_comments):
         threads = []
@@ -88,47 +99,31 @@ class TextFeatures:
         self.startProcessesAndJoinThem(threads)
         threads.clear()
 
-    def _calculateCosSimilarity(self):
+    def _calculateCosSimilarity(self, df):
 
-        # calculate cos-similarity between article and comment
-        manager = Manager()
-        return_dict = manager.dict()
-
-        processes = []
-
-        for index, df_part in enumerate(self.df_parts):
-            p = Process(target=self._calculate_article_cos_similarity,
-                        args=(df_part, return_dict, index))
-            p.start()
-            processes.append(p)
-
-        for p in processes:
-            p.join()
-
-        processes.clear()
-        result = list(chain.from_iterable(return_dict.values()))
+        # calculate similarity for article in combination with comment
+        pool = Pool(processes=CORE_THREADS_NUM)
+        result = pool.map(self.calculateCosSimilarityForArticleAndComment,
+                          list(zip(df['comment'],df['url'])))
         self.results.insert(Resultindices.COS_SIMILARITY_ARTICLE.value, result)
 
-        # _______________________________________________________________________
-        # calculate cos-similarity between hate-comments of article and comment
-
-        manager = Manager()
-        return_dict = manager.dict()
-
-        processes = []
-
-        for index, df_part in enumerate(self.df_parts):
-            p = Process(target=self._calculate_hate_cos_similarity,
-                        args=(df_part, return_dict, index))
-            p.start()
-            processes.append(p)
-
-        for p in processes:
-            p.join()
-
-        processes.clear()
-        result = list(chain.from_iterable(return_dict.values()))
+        pool = Pool(processes=CORE_THREADS_NUM)
+        result = pool.map(self.calculateCosSimilarityForArticleAndHateCommentsOfArticle,
+                          list(zip(df['comment'], df['url'])))
         self.results.insert(Resultindices.COS_SIMILARITY_HATE_COMMENTS.value, result)
+
+    def calculateCosSimilarityForArticleAndHateCommentsOfArticle(self, comment_url_tupel):
+
+        comment = comment_url_tupel[0]
+        url = comment_url_tupel[1]
+
+        # use "==" True instead of "is", otherwise it will not work (don't ask me why)
+        hate_comments = self.all_comments[self.all_comments['hate'] == True]
+        corresponding_hate_comments = hate_comments[hate_comments['url'] == url].comment
+
+        topic_features = TopicFeatures()
+        return topic_features.get_cos_similarity_for_hate_comments_of_article(comment,
+                                                                              list(corresponding_hate_comments))
 
     def _calculateSyntaxFeatures(self, df):
 
@@ -192,48 +187,11 @@ class TextFeatures:
         self.startProcessesAndJoinThem(threads)
         threads.clear()
 
-    def _applyPOSTaggin(self, df_part, result_dict, index):
-        # text_blob_comments = df_part.apply(lambda x: TextBlob(x).tags)
-        text_blob_comments = []
-        for row in df_part['comment']:
-            text_blob_comments.append(TextBlob(row).tags)
-        result_dict[index] = text_blob_comments
-
     def startProcessesAndJoinThem(self, processes):
         for p in processes:
             p.start()
         for p in processes:
             p.join()
-
-    def _tagComments(self):
-        manager = Manager()
-        return_dict = manager.dict()
-        processes = []
-
-        for i, df_part in enumerate(self.df_parts):
-            p = Process(target=self._applyPOSTaggin, args=(df_part, return_dict, i))
-            p.start()
-            processes.append(p)
-
-        for p in processes:
-            p.join()
-
-        tagged_comments = list(chain.from_iterable(return_dict.values()))
-        return tagged_comments
-
-    def _calculate_article_cos_similarity(self, df, cos_list, result_index):
-        topic_features = TopicFeatures()
-        list = []
-        for index, row in df.iterrows():
-            list.append(int(topic_features.get_cos_similarity_for_article(row['comment'] + ' nostop', row['url'])))
-        cos_list[result_index] = list
-
-    def _calculate_hate_cos_similarity(self, df, cos_list, result_index):
-        topic_features = TopicFeatures()
-        list = []
-        for index, row in df.iterrows():
-            list.append(int(topic_features.get_cos_similarity_for_hate_comments_of_article(row['comment'] + ' nostop', row['url'])))
-        cos_list[result_index] = list
 
     def _calculateFeatureFromTopicModel(self, df):
 
@@ -249,12 +207,11 @@ class TextFeatures:
 
         self.results.insert(Resultindices.KULLBACK_LEIBLER_DIVERGENCE_TO_ARTICLE.value, list)
 
-    def _applyTopicModel(self,df,result_list, index, topic_model):
+    def _applyTopicModel(self, df, result_list, index, topic_model):
         list = []
         for index, row in df.iterrows():
             list.append(topic_model.calculateKullbackLeibnerDivergence(row['comment'] + ' nostop', row['url']))
         result_list[index] = list
-
 
     def show_correlation_heat_map(self, feature_matrix, df):
         # #EM = #ExclamationMarks
@@ -289,11 +246,10 @@ class TextFeatures:
                          '# AJ', '# DM', '# PP', '# AV',
                          'COS_A', 'COS_NAC', 'KLDA', 'TV']
         correlation_matrix = frame.corr()
-        np.savetxt("./textfeaturematrix.csv",correlation_matrix, delimiter=";")
+        np.savetxt("./textfeaturematrix.csv", correlation_matrix, delimiter=";")
 
         ax = plt.axes()
         sns.heatmap(correlation_matrix, ax=ax)
-
 
         ax.set_title('Text-Feature Correlations')
         plt.show()
@@ -307,3 +263,15 @@ class TextFeatures:
                 count = count + 1
 
         return count
+
+    @staticmethod
+    def tagCommentsForSemanticAnalysis(comment):
+        tags = TextBlob(comment).tags
+        return tags
+
+    def calculateCosSimilarityForArticleAndComment(self,comment_url_tupel):
+        topic_features = TopicFeatures()
+        comment_text = comment_url_tupel[0]
+        article_url = comment_url_tupel[1]
+        article_text = self.articles[self.articles['url'] == article_url].text
+        return topic_features.get_cos_similarity_for_article(comment_text, article_text)
