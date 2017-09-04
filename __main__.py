@@ -6,7 +6,7 @@ import nltk
 import os
 from analysis.roc import ROC
 import pprint
-import code
+import numpy as np
 
 def init_nltk():
     if not os.path.exists('nltk'):
@@ -20,14 +20,26 @@ def init_nltk():
             nltk.download(package, os.getcwd() + '/nltk')
 
 def load_data(dataset='tiny'):
-    # train_df = pd.read_csv('data/' + dataset + '/train.csv', sep=',').dropna(subset=['comment', 'url'])
-    # test_df = pd.read_csv('data/' + dataset + '/test.csv', sep=',').dropna(subset=['comment', 'url'])
-    train_df = pd.read_csv('../evaluation_data/train.csv.augmented.csv', sep=',').dropna(subset=['comment', 'url'])
-    test_df = pd.read_csv('../evaluation_data/test.csv.augmented.csv', sep=',').dropna(subset=['comment', 'url'])
+    train_df = pd.read_csv('data/' + dataset + '/train.csv', sep=',').dropna(subset=['comment', 'url'])
+    test_df = pd.read_csv('data/' + dataset + '/test.csv', sep=',').dropna(subset=['comment', 'url'])
 
     train_df['ressort'].fillna('unknown', inplace=True)
     test_df['ressort'].fillna('unknown', inplace=True)
-    return (train_df, test_df)
+
+    fast_learning = True
+    # Reduce sample set to stratified for faster learning
+    if fast_learning:
+        np.random.seed(42)
+        train_df = train_df.reindex(np.random.permutation(train_df.index))
+
+        samples = train_df[train_df['hate'] == True].shape[0]
+        print("Samples: ", samples*2)
+        X = pd.concat([train_df[train_df['hate'] == True].head(samples), train_df[train_df['hate'] == False].head(samples)])
+        X = X.reindex(np.random.permutation(X.index))
+    else:
+        X = train_df
+
+    return (X, test_df)
 
 def execute(dataset='tiny'):
     print("Using dataset", dataset)
@@ -48,22 +60,12 @@ def execute(dataset='tiny'):
         roc.calculate(result[classifier], test_df['hate'])
         roc.print(dataset + ' using ' + classifier)
 
-    code.interact(local=locals())
+    result.to_csv('results/' + dataset + '.csv')
 
 def main():
     init_nltk()
     datasets = [
-       # 'test',
-       # 'tiny',
-       # '1000',
-       # '10000',
-       # '100000',
-       # 'stratified',
-       # 'stratified_1000',
-       # 'stratified_10000',
-       # 'stratified_30000',
-       # 'all',
-        'all features, (3,5)-ngrams, min=50',
+       'test'
     ]
     for dataset in datasets:
         execute(dataset)

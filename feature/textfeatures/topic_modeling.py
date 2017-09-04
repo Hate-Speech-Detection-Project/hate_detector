@@ -28,18 +28,21 @@ class TopicModeling:
         dictionary = corpora.Dictionary(articles)
         dictionary.save("model/ldamodel/dictionary.dict")
 
-    def calculateKullbackLeibnerDivergence(self, comment, article_url):
+    def calculateKullbackLeibnerDivergence(self, comment, article_url, articles):
         dbinterface = DBInterface()
         kullbackLeiblerDivergence = 0
-        article = dbinterface.get_articlebody_by_url(article_url)
-        if not article is None:
-            article_body = article[0]
-            bow_article = self.dict.doc2bow(article_body.lower().split(' '))
-            bow_comment = self.dict.doc2bow(comment.lower().split(' '))
-            get_topicdistribution_for_comment = self.lda.get_document_topics(bow_comment, minimum_probability=0)
-            get_topicdistribution_for_commentarticle = self.lda.get_document_topics(bow_article, minimum_probability=0)
-            kullbackLeiblerDivergence = stats.entropy([tupel[1] for tupel in get_topicdistribution_for_comment],
-                                                      [tupel[1] for tupel in get_topicdistribution_for_commentarticle])
+        articles = articles[articles['url'] == article_url]
+        if articles.shape[0] > 0:
+            article = articles.iloc[0]['body']
+
+            if not article is None:
+                article_body = article
+                bow_article = self.dict.doc2bow(article_body.lower().split(' '))
+                bow_comment = self.dict.doc2bow(comment.lower().split(' '))
+                get_topicdistribution_for_comment = self.lda.get_document_topics(bow_comment, minimum_probability=0)
+                get_topicdistribution_for_commentarticle = self.lda.get_document_topics(bow_article, minimum_probability=0)
+                kullbackLeiblerDivergence = stats.entropy([tupel[1] for tupel in get_topicdistribution_for_comment],
+                                                          [tupel[1] for tupel in get_topicdistribution_for_commentarticle])
 
         return kullbackLeiblerDivergence
 

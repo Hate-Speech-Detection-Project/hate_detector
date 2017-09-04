@@ -37,13 +37,14 @@ class Predictor:
 
         processes = [None] * len(self.classifier)
         for index, classifier in enumerate(self.classifier):
-            processes[index] = pool.apply_async(classifier[1].fit, (feature_matrix, self.ground_truth(df)))
+            processes[index] = classifier[1].fit(feature_matrix, self.ground_truth(df))
+            # processes[index] = pool.apply_async(classifier[1].fit, (feature_matrix, self.ground_truth(df)))
 
         for index, trainedClassifier in enumerate(processes):
-            classifier = trainedClassifier.get()
+            classifier = trainedClassifier # .get()
             self.classifier[index] = (classifier.name, classifier,)
-            f = open('trained_classifiers/' + str(df.shape[0]) + '_' + classifier.name + '_' + str(int(time.time())) + '.pickle', 'wb')
-            pickle.dump(classifier, f)
+            # f = open('trained_classifiers/' + str(df.shape[0]) + '_' + classifier.name + '_' + str(int(time.time())) + '.pickle', 'wb')
+            # pickle.dump(classifier, f, protocol=4)
 
     def predict(self, df):
         '''
@@ -70,15 +71,20 @@ class Predictor:
 
         self._metrics = metrics
 
-        for threshold in range(0, 100, 10):
-            hate_threshold = np.percentile(predictions, threshold)
-            print("Threshold", hate_threshold)
-            scores = precision_recall_fscore_support(
-                df['hate'],
-                (predictions > hate_threshold).astype(int),
-                average='binary'
-            )
-            print("Scores:", dict(zip(['precision', 'recall', 'f-score', 'support'], scores)))
+        with open("measurements.txt", "a") as measurements_file:
+            measurements_file.write(", ".join([feature[0] for feature in self.features]) + "\n\n")
+            for threshold in range(0, 100, 10):
+                hate_threshold = np.percentile(predictions, threshold)
+                print("Threshold", hate_threshold)
+                scores = precision_recall_fscore_support(
+                    df['hate'],
+                    (predictions > hate_threshold).astype(int),
+                    average='binary'
+                )
+                print("Scores:", dict(zip(['precision', 'recall', 'f-score', 'support'], scores)))
+                measurements_file.write("Threshold" + str(hate_threshold) + "\n")
+                measurements_file.write(str(dict(zip(['precision', 'recall', 'f-score', 'support'], scores))) + "\n")
+            measurements_file.write("#" * 80 + "\n\n")
 
         return predictions
 
@@ -89,26 +95,27 @@ class Predictor:
         return df['hate']
 
     def calculate_feature_matrix(self, df):
-        feature_matrix = hstack([feature[1].extractFeatures(df) for feature in self.features])
-        # scaler = MaxAbsScaler()
-        # scaled_feature_matrix = scaler.fit_transform(feature_matrix)
-        # normalize(scaled_feature_matrix, norm='l2', axis=0, copy=False)
+        # feature_matrix = hstack([feature[1].extractFeatures(df) for feature in self.features])
+        feature_matrix = self.features[0][1].extractFeatures(df)
+        scaler = MaxAbsScaler()
+        scaled_feature_matrix = scaler.fit_transform(feature_matrix)
+        normalize(scaled_feature_matrix, norm='l2', axis=0, copy=False)
         self.feature_matrix = feature_matrix
         # code.interact(local=locals())
-        feature_matrix.data = np.nan_to_num(feature_matrix.data)
-        feature_matrix.eliminate_zeros()
+        # feature_matrix.data = np.nan_to_num(feature_matrix.data)
+        # feature_matrix.eliminate_zeros()
         return feature_matrix
 
     def __init__(self):
         self.scheduler = Scheduler()
 
         self.features = [
-            ('text_features', TextFeatures()), # DB instance needed for these features
+            # ('text_features', TextFeatures()), # DB instance needed for these features
             ('character_ngram_features', CharacterNGramFeatures()),
-            # ('text_features', SimpleTextFeatures()),
+            ('simple_text_features', SimpleTextFeatures()),
             ('word2vec', Word2Vec()),
+            # ('user_features', UserFeatures()),
             ('ngram_features', NGramFeatures()),
-            ('user_features', UserFeatures()),
         ]
 
         self.classifier = [
