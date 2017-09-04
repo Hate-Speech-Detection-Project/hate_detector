@@ -72,7 +72,7 @@ class Predictor:
         self._metrics = metrics
 
         with open("measurements.txt", "a") as measurements_file:
-            measurements_file.write(", ".join([feature[0] for feature in self.features]))
+            measurements_file.write(", ".join([feature[0] for feature in self.features]) + "\n\n")
             for threshold in range(0, 100, 10):
                 hate_threshold = np.percentile(predictions, threshold)
                 print("Threshold", hate_threshold)
@@ -84,7 +84,7 @@ class Predictor:
                 print("Scores:", dict(zip(['precision', 'recall', 'f-score', 'support'], scores)))
                 measurements_file.write("Threshold" + str(hate_threshold) + "\n")
                 measurements_file.write(str(dict(zip(['precision', 'recall', 'f-score', 'support'], scores))) + "\n")
-            measurements_file.write("#" * 80)
+            measurements_file.write("#" * 80 + "\n\n")
 
         return predictions
 
@@ -111,10 +111,11 @@ class Predictor:
 
         self.features = [
             # ('text_features', TextFeatures()), # DB instance needed for these features
-            # ('character_ngram_features', CharacterNGramFeatures()),
-            # ('text_features', SimpleTextFeatures()),
-            # ('word2vec', Word2Vec()),
-            # ('ngram_features', NGramFeatures()),
+            ('character_ngram_features', CharacterNGramFeatures()),
+            ('simple_text_features', SimpleTextFeatures()),
+            ('word2vec', Word2Vec()),
+            # ('user_features', UserFeatures()),
+            ('ngram_features', NGramFeatures()),
         ]
 
         self.classifier = [
