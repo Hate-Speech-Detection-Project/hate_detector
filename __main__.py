@@ -23,10 +23,7 @@ def load_data(dataset='tiny'):
     train_df = pd.read_csv('data/' + dataset + '/train.csv', sep=',').dropna(subset=['comment', 'url'])
     test_df = pd.read_csv('data/' + dataset + '/test.csv', sep=',').dropna(subset=['comment', 'url'])
 
-    train_df['ressort'].fillna('unknown', inplace=True)
-    test_df['ressort'].fillna('unknown', inplace=True)
-
-    fast_learning = True
+    fast_learning = False
     # Reduce sample set to stratified for faster learning
     if fast_learning:
         np.random.seed(42)
