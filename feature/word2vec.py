@@ -21,7 +21,7 @@ class Word2Vec:
 
     def text_to_wordlist(self, comment):
         try:
-            comment_text = re.sub(r'https?:\/\/.*[\r\n]*', '', comment, flags=re.MULTILINE)
+            comment_text = re.sub(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', '', comment, flags=re.MULTILINE)
             comment_text = re.sub(r'<\/?em>', '', comment_text, flags=re.MULTILINE)
             comment_text = re.sub("[^a-zA-ZöÖüÜäÄß]"," ", comment_text)
             comment_text = re.sub("\s\s+"," ", comment_text)
