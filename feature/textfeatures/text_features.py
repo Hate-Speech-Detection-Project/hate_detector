@@ -37,6 +37,7 @@ class TextFeatures:
             usecols=["body", "url"])
 
         self.articles["text"] = self.articles["body"]
+        self.all_comments = None
 
     def extractFeatures(self, old_df):
         print('Start extraction of text-features')
@@ -44,7 +45,8 @@ class TextFeatures:
         start_time = time.time()
 
         df = old_df[['cid', 'comment', 'url', 'hate']]
-        self.all_comments = df
+        if self.all_comments == None:
+            self.all_comments = df
 
         tagged_comments = self._tagComments(df)
         self._calculateFeatureFromTopicModel(old_df)
