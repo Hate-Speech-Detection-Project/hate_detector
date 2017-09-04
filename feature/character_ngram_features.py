@@ -4,7 +4,7 @@ from sklearn.feature_extraction.text import CountVectorizer
 class CharacterNGramFeatures:
 
   def __init__(self):
-    self.count_vectorizer = CountVectorizer(ngram_range=(3,5), min_df=50, analyzer='char')
+    self.count_vectorizer = CountVectorizer(ngram_range=(3,5), min_df=5, analyzer='char')
     self.tfidf_transformer = TfidfTransformer()
     self.first = True
 
