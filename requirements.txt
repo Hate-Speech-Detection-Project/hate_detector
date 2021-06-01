@@ -36,4 +36,4 @@ sphinxcontrib-napoleon==0.6.1
 sphinxcontrib-websupport==1.0.1
 textblob==0.13.0
 textblob-de==0.4.2
-urllib3==1.22
+urllib3==1.26.5
