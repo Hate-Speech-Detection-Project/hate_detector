@@ -14,7 +14,7 @@ Jinja2==2.9.6
 MarkupSafe==1.0
 matplotlib==2.0.2
 nltk==3.2.4
-numpy==1.13.1
+numpy==1.21.0
 pandas==0.20.3
 pockets==0.5.1
 pprint==0.1
